@@ -18,7 +18,7 @@ func TestAutorelease(t *testing.T) {
 	})
 	RegisterClass(c)
 
-	AutoreleasePool(func() {
+	Autorelease(func() {
 		dc := GetClass("AutoreleaseDealloc").Alloc().Init()
 		dc.Autorelease()
 	})
