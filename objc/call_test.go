@@ -7,6 +7,7 @@ package objc
 import (
 	"sync"
 	"testing"
+	"unsafe"
 )
 
 type SomeObject struct {
@@ -47,12 +48,15 @@ func registerTestClass() {
 		c.AddMethod("callWithInt16:", (*SomeObject).CallWithInt16)
 		c.AddMethod("callWithInt8:", (*SomeObject).CallWithInt8)
 		c.AddMethod("callWithBool:", (*SomeObject).CallWithBool)
+		c.AddMethod("callReturnObject:", (*SomeObject).CallReturnObject)
 		RegisterClass(c)
 	})
 }
 
-func (so *SomeObject) SetTesting(t *testing.T) {
-	so.t = t
+// func (so *SomeObject) SetTesting(t *testing.T) {
+func (so *SomeObject) SetTesting(t uintptr) {
+	// FIXME
+	so.t = (*testing.T)(unsafe.Pointer(t))
 }
 
 func (so *SomeObject) CallWithObjectAndSelector(object Object, selector Selector) {
@@ -128,6 +132,10 @@ func (so *SomeObject) CallWithBool(val bool) {
 	if val != boolval {
 		so.t.Errorf("bool: expected %v, got %v", boolval, val)
 	}
+}
+
+func (so *SomeObject) CallReturnObject(o Object) Object {
+	return o
 }
 
 func TestSelectorObjectPassing(t *testing.T) {
@@ -212,4 +220,22 @@ func TestBoolPassing(t *testing.T) {
 	so := GetClass("SomeObject").Send("alloc").Send("init")
 	so.Send("setTesting:", t)
 	so.Send("callWithBool:", boolval)
+}
+
+func TestObjectReturn(t *testing.T) {
+	registerTestClass()
+	so := GetClass("SomeObject").Send("alloc").Send("init")
+	out := so.Send("callReturnObject:", so)
+	if out != so {
+		t.Errorf("expected to return the input object")
+	}
+}
+
+func TestObjectReturn2(t *testing.T) {
+	registerTestClass()
+	so := GetClass("SomeObject").Send("alloc").Send("init")
+	out := send2(so.Pointer(), "callReturnObject:", so)
+	if out != so.Pointer() {
+		t.Errorf("expected to return the input object")
+	}
 }

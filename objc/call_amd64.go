@@ -100,39 +100,6 @@ func methodCallTarget() unsafe.Pointer {
 	return unsafe.Pointer(&C.GoObjc_CallTargetFrameSetup)
 }
 
-// setIBOutletValue attempts to assign the Objective-C object represented
-// by 'value' to the field named 'name' in the Go struct represented by 'obj'.
-//
-// The function sends the 'retain' message to the Objective-C object represented
-// by 'value' if the assignment was successful.
-//
-// If the assignment operation fails, this function will raise a runtime panic.
-func setIBOutletValue(obj reflect.Value, name string, value Object) {
-	// Find an IBOutlet with the name keyName.
-	val := obj.Elem()
-	typ := val.Type()
-	fieldIdx := -1
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		if field.Tag.Get("objc") == "IBOutlet" && field.Type.Implements(objectInterfaceType) {
-			if field.Name == name {
-				fieldIdx = i
-				break
-			}
-		}
-	}
-
-	// If we couldn't find a matching field, simply panic.
-	// We should only run into this is there is a bug in the package.
-	if fieldIdx == -1 {
-		panic("objc: bad setter for IBOutlet field '" + name + "'")
-	}
-
-	fieldVal := val.Field(fieldIdx)
-	fieldVal.Set(reflect.ValueOf(value))
-	value.Retain()
-}
-
 //export goMethodCallEntryPoint
 func goMethodCallEntryPoint(p uintptr) uintptr {
 	frame := (*amd64frame)(unsafe.Pointer(p))

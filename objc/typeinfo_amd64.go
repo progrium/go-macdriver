@@ -31,7 +31,7 @@ func typeInfoForType(typ reflect.Type) string {
 	case reflect.Int32:
 		return encInt
 	case reflect.Int64:
-		return encULong
+		return encLongLong
 	case reflect.Uint:
 		return encUInt
 	case reflect.Uint8:
@@ -41,15 +41,20 @@ func typeInfoForType(typ reflect.Type) string {
 	case reflect.Uint32:
 		return encUInt
 	case reflect.Uint64:
-		return encULong
-	case reflect.Uintptr:
-		return encPtr
+		return encULongLong
 	case reflect.Float32:
 		return encFloat
 	case reflect.Float64:
 		return encDouble
+
+	// For pointers we need to specify what type they're pointing to.
+	// Though for the sake of argument passing the element type doesn't change
+	// the size of the pointer itself. So we use `long long` as an arbitrary type
+	// so that we can use these in initializing the NSMethodSignature.
+	case reflect.Uintptr:
+		return encPtr + encLongLong
 	case reflect.Ptr:
-		return encPtr
+		return encPtr + encLongLong
 	}
 
 	panic("typeinfo: unhandled/invalid kind " + fmt.Sprintf("%v", kind) + " " + fmt.Sprintf("%v", typ))

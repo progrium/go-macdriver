@@ -22,7 +22,10 @@ char *GoObjc_SelectorToString(void *sel) {
 }
 */
 import "C"
-import "unsafe"
+import (
+	"strings"
+	"unsafe"
+)
 
 // A Selector represents an Objective-C method selector.
 type Selector interface {
@@ -80,9 +83,14 @@ func stringFromSelector(sel unsafe.Pointer) string {
 // typeInfoForMethod returns the type encoding string for
 // selector on obj's Class.
 func typeInfoForMethod(obj Object, selector string) string {
-	sel := selectorWithName(selector)
-	cls := getObjectClass(obj)
-	return C.GoString(C.GoObjc_TypeInfoForMethod(unsafe.Pointer(cls.Pointer()), sel))
+	sig := methodSignatureForSelector(obj.Pointer(), selector)
+	nargs := numberOfArguments(sig)
+	sigParts := make([]string, nargs+1)
+	sigParts[0] = methodReturnType(sig)
+	for i := 0; i < nargs; i++ {
+		sigParts[i+1] = getArgumentTypeAtIndex(sig, i)
+	}
+	return strings.Join(sigParts, "")
 }
 
 // simplifyTypeInfo returns a simplified typeInfo representation

@@ -9,13 +9,13 @@ import (
 )
 
 type NSPoint struct {
-	X float32
-	Y float32
+	X float64
+	Y float64
 }
 
 type NSSize struct {
-	Width  float32
-	Height float32
+	Width  float64
+	Height float64
 }
 
 type NSRect struct {
