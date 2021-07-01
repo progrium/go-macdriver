@@ -14,7 +14,9 @@ var genCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		pkg := gen.GoPackage{
 			Package: "foundation",
-
+			LinkFrameworks: []string{
+				"Foundation",
+			},
 			Imports: []gen.Import{
 				{Path: "unsafe"},
 				{Path: "github.com/progrium/macdriver/objc2", Alias: "objc"},

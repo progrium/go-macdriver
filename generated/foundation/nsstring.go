@@ -7,7 +7,7 @@ import (
 )
 
 /*
-#cgo LDFLAGS: -lobjc
+#cgo LDFLAGS: -lobjc -framework Foundation
 #define __OBJC2__ 1
 #include <objc/message.h>
 #include <stdlib.h>

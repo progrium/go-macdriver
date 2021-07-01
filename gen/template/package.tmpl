@@ -1,6 +1,6 @@
 {{define "cgo"}}
 /*
-#cgo LDFLAGS: -lobjc
+#cgo LDFLAGS: -lobjc{{range .LinkFrameworks}} -framework {{.}}{{end}}
 #define __OBJC2__ 1
 #include <objc/message.h>
 #include <stdlib.h>

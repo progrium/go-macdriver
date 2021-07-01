@@ -77,6 +77,7 @@ type ClassDef struct {
 
 type GoPackage struct {
 	Package         string
+	LinkFrameworks  []string
 	Imports         []Import
 	MsgSendWrappers []CGoMsgSend
 	CGoWrapperFuncs []CGoWrapperFunc
