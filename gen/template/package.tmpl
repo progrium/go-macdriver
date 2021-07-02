@@ -1,0 +1,114 @@
+{{define "cgo"}}
+/*
+#cgo LDFLAGS: -lobjc{{range .LinkFrameworks}} -framework {{.}}{{end}}
+#define __OBJC2__ 1
+#include <objc/message.h>
+#include <stdlib.h>
+
+{{range .MsgSendWrappers}}
+typedef {{.Return}} fn_type_{{.Name}}(void*, SEL
+	{{- range .Args -}}
+	, {{.Type}}
+	{{- end -}}
+);
+
+{{.Return}} {{.Name}}(void *id
+	{{- range .Args -}}
+	, {{.Type}} {{.Name}}
+	{{- end -}}
+) {
+	{{if .HasReturn}}return {{end}}((fn_type_{{.Name}}*) {{.MsgSendFunc}}) (id, sel_registerName({{.Selector | printf "%q"}})
+		{{- range .Args -}}
+		, {{.Name}}
+		{{- end -}}
+	);
+}
+{{end}}
+*/
+import "C"
+{{end}}
+
+{{define "go_to_cgo"}}
+{{range $x := .}}
+func {{.Name}}(
+	{{- range .Args}}
+	{{.Name}} {{.Type}},
+	{{- end}}
+) {{if .HasReturn}}(
+	{{range $i, $_ := .Returns}}
+	r{{$i}} {{.Type}},
+	{{end}}
+){{end}} {
+	{{if .HasReturn}}ret := {{end}}C.{{.Name}}(
+		{{- range .Args}}
+		{{printf .ToCGoFmt .Name}},
+		{{- end}}
+	)
+	{{range $i, $_ := .Returns}}
+	r{{$i}} = {{printf .FromCGoFmt "ret"}}
+	{{end}}
+	return
+}
+{{end}}
+{{end}}
+
+{{define "main"}}
+package {{.Package}}
+
+import (
+	{{range .Imports}}
+	{{if .Alias -}}{{.Alias}} {{end -}}
+	{{.Path | printf "%q"}}
+	{{end}}
+)
+
+{{template "cgo" .}}
+{{template "go_to_cgo" .CGoWrapperFuncs}}
+
+{{range $cls := .Classes}}
+type {{.Name}}_class_methods struct {
+	objc.Class
+}
+
+var {{.Name}}_class = {{.Name}}_class_methods{
+	Class: objc.GetClass({{.Name | printf "%q"}}),
+}
+
+func (cls {{.Name}}_class_methods) Alloc() {{.Name}} {
+	return {{.Name}}_fromId(cls.Class.Alloc())
+}
+
+type {{.Name}} struct {
+	objc.Object
+}
+
+func {{.Name}}_fromId(id objc.Id) {{.Name}} {
+	return {{.Name}}{id}
+}
+
+func {{.Name}}_fromPointer(ptr unsafe.Pointer) {{.Name}} {
+	return {{.Name}}_fromId(objc.Id(ptr))
+}
+
+{{range .InstanceMethods}}
+func (x {{$cls.Name}}) {{.Name}}(
+	{{range .Args}}
+		{{.Name}} {{.Type}},
+	{{end}}
+) {{if .HasReturn}}(
+	{{range .Returns}}
+	{{.Type}},
+	{{end}}
+){{end}} {
+	{{if .HasReturn}}return {{end}}{{.WrappedFunc}}(
+		x,
+		{{range .Args}}
+			{{.Name}},
+		{{end}}
+	)
+}
+{{end}}
+
+{{end}}
+
+{{end}}
